@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: #0f0f11;
+  --app-sidebar: #121214;
+  --app-card: #18181b;
+  --app-card-alt: #141416;
+  --app-card-hover: #1e1e22;
+  --app-border: #27272a;
+  --app-accent: #0a84ff;
+  --app-accent-hover: #0070e0;
+  --app-text: #f4f4f5;
+  --app-text-muted: #9ca3af;
+}
+
+/* Global Comprehensive Dynamic Theme Overrides */
+html, body, #root {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+/* App Canvas & Containers */
+.bg-\[\#0f0f11\], [class*="bg-[#0f0f11]"] {
+  background-color: var(--app-bg) !important;
+}
+
+/* Sidebars & Top Bars */
+.bg-\[\#121214\], [class*="bg-[#121214]"] {
+  background-color: var(--app-sidebar) !important;
+}
+
+/* Cards & Modals Surface */
+.bg-\[\#18181b\], [class*="bg-[#18181b]"] {
+  background-color: var(--app-card) !important;
+}
+
+.bg-\[\#141416\], [class*="bg-[#141416]"], .bg-\[\#141417\] {
+  background-color: var(--app-card-alt) !important;
+}
+
+.bg-\[\#1e1e22\], [class*="bg-[#1e1e22]"] {
+  background-color: var(--app-card-hover) !important;
+}
+
+/* Borders */
+.border-\[\#27272a\], [class*="border-[#27272a]"],
+.border-\[\#222226\], [class*="border-[#222226]"],
+.border-\[\#2e2e34\], [class*="border-[#2e2e34]"],
+.border-\[\#1f1f23\], [class*="border-[#1f1f23]"],
+.border-\[\#2b2b30\], [class*="border-[#2b2b30]"],
+.border-\[\#3c3c44\] {
+  border-color: var(--app-border) !important;
+}
+
+/* Brand Accent Colors */
+.text-\[\#0a84ff\], [class*="text-[#0a84ff]"] {
+  color: var(--app-accent) !important;
+}
+
+.bg-\[\#0a84ff\], [class*="bg-[#0a84ff]"] {
+  background-color: var(--app-accent) !important;
+}
+
+.hover\:bg-\[\#0070e0\]:hover, [class*="hover:bg-[#0070e0]"]:hover {
+  background-color: var(--app-accent-hover) !important;
+}
+
+.border-\[\#0a84ff\], [class*="border-[#0a84ff]"] {
+  border-color: var(--app-accent) !important;
+}
+
+@layer base {
+  body {
+    @apply antialiased select-none overflow-hidden font-sans;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--app-border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--app-accent);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 0.15s ease-out forwards;
+  }
+
+  .animate-slideInRight {
+    animation: slideInRight 0.2s ease-out forwards;
+  }
+}
