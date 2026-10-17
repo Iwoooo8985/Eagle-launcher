@@ -40,13 +40,23 @@ A high-performance, minimalist, and unified PC game launcher for Windows built w
 
 ---
 
-## 🚀 Quick Start (Pre-built)
+## 🚀 Download & Installation
 
+### Option 1: Setup Wizard (Recommended for Users)
+Run **`Eagle-Launcher-Setup.exe`**:
+- Automatically installs Eagle Launcher to your PC (`%LOCALAPPDATA%\EagleLauncher`).
+- Registers the official **Windows Start Menu shortcut** (searchable by pressing `Win` and typing `Eagle Launcher`).
+- Creates a **Desktop shortcut** and launches into your library.
+
+### Option 2: Portable Executable
 Run `Eagle Launcher.exe` directly from the folder:
 ```powershell
 .\Eagle Launcher.exe
 ```
-No installation, Python, or command prompt required.
+No installation or extra dependencies required.
+
+### Option 3: One-Click Installer Script
+Double-click **`Install-Eagle-Launcher.bat`** to install shortcuts and start the launcher.
 
 ---
 

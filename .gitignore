@@ -9,7 +9,9 @@ dist-ssr/
 
 # Rust / Cargo build outputs (prevents gigabytes of compilation cache)
 src-tauri/target/
+installer/target/
 target/
+**/target/
 *.pdb
 *.old.exe
 
