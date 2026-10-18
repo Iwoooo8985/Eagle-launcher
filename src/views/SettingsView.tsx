@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../store/useGameStore';
-import { HardDrive, Zap, RefreshCw, CheckCircle2, Cloud, FolderOpen, Sparkles } from 'lucide-react';
+import {
+  HardDrive,
+  Zap,
+  RefreshCw,
+  CheckCircle2,
+  Cloud,
+  FolderOpen,
+  Sparkles,
+  ExternalLink,
+  AlertTriangle,
+  Check,
+} from 'lucide-react';
 import { GoogleDriveTutorialModal } from '../components/modals/GoogleDriveTutorialModal';
 
 interface SettingsViewProps {
@@ -10,6 +21,21 @@ interface SettingsViewProps {
 export function SettingsView({ onOpenFirstLaunch }: SettingsViewProps) {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isBrowsingFolder, setIsBrowsingFolder] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState<{
+    checked: boolean;
+    exists: boolean;
+    writable: boolean;
+    message: string;
+    suggested_paths: string[];
+  }>({
+    checked: false,
+    exists: false,
+    writable: false,
+    message: '',
+    suggested_paths: [],
+  });
+  const [isBackingUpAll, setIsBackingUpAll] = useState(false);
+  const [backupNotice, setBackupNotice] = useState<string | null>(null);
 
   const {
     games,
@@ -24,10 +50,39 @@ export function SettingsView({ onOpenFirstLaunch }: SettingsViewProps) {
     setGoogleDriveSyncEnabled,
     setGoogleDriveSyncPath,
     resetFirstRun,
+    validateCloudSyncPath,
+    backupAllSaves,
+    openCloudFolder,
     toggleSetting,
     scanLocalDisks,
     isScanning,
   } = useGameStore();
+
+  const checkCloudDir = async () => {
+    const res = await validateCloudSyncPath();
+    setCloudStatus({
+      checked: true,
+      exists: res.exists,
+      writable: res.writable,
+      message: res.message,
+      suggested_paths: res.suggested_paths || [],
+    });
+  };
+
+  useEffect(() => {
+    if (googleDriveSyncEnabled && googleDriveSyncPath) {
+      checkCloudDir();
+    }
+  }, [googleDriveSyncEnabled, googleDriveSyncPath]);
+
+  const handleBackupAll = async () => {
+    setIsBackingUpAll(true);
+    setBackupNotice('Backing up game saves to Google Drive...');
+    const res = await backupAllSaves();
+    setIsBackingUpAll(false);
+    setBackupNotice(`Completed: Successfully backed up saves for ${res.succeeded} of ${res.total} games!`);
+    setTimeout(() => setBackupNotice(null), 6000);
+  };
 
   const handleBrowseFolder = async () => {
     setIsBrowsingFolder(true);
@@ -233,31 +288,108 @@ export function SettingsView({ onOpenFirstLaunch }: SettingsViewProps) {
         </label>
 
         {googleDriveSyncEnabled && (
-          <div className="space-y-1.5 pt-1">
-            <label className="block text-[11px] text-[#9ca3af]">
-              Google Drive Save Backup Directory
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={googleDriveSyncPath}
-                onChange={(e) => setGoogleDriveSyncPath(e.target.value)}
-                placeholder="G:\My Drive\EagleSaves"
-                className="flex-1 bg-[#121214] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#0a84ff]"
-              />
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1.5">
+              <label className="block text-[11px] text-[#9ca3af]">
+                Google Drive Save Backup Directory
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={googleDriveSyncPath}
+                  onChange={(e) => setGoogleDriveSyncPath(e.target.value)}
+                  placeholder="G:\My Drive\EagleSaves"
+                  className="flex-1 bg-[#121214] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#0a84ff]"
+                />
+                <button
+                  type="button"
+                  onClick={handleBrowseFolder}
+                  disabled={isBrowsingFolder}
+                  className="px-3 py-2 rounded-lg bg-[#27272a] hover:bg-[#323238] text-[#f4f4f5] text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0"
+                >
+                  <FolderOpen size={13} />
+                  Browse...
+                </button>
+              </div>
+            </div>
+
+            {/* Live Connection Diagnostics */}
+            {cloudStatus.checked && (
+              <div
+                className={`p-3 rounded-lg border text-xs flex flex-col gap-2 ${
+                  cloudStatus.writable
+                    ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                    : 'bg-amber-950/20 border-amber-500/30 text-amber-300'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-medium">
+                  {cloudStatus.writable ? (
+                    <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                  ) : (
+                    <AlertTriangle size={15} className="text-amber-400 shrink-0" />
+                  )}
+                  <span>{cloudStatus.message}</span>
+                </div>
+
+                {!cloudStatus.writable && cloudStatus.suggested_paths && cloudStatus.suggested_paths.length > 0 && (
+                  <div className="mt-1 space-y-1">
+                    <span className="text-[11px] text-[#9ca3af] block">
+                      Recommended accessible folders on your PC:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {cloudStatus.suggested_paths.map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setGoogleDriveSyncPath(p)}
+                          className="px-2 py-0.5 rounded bg-[#27272a] hover:bg-[#323238] text-[10px] text-[#d1d5db] border border-[#3f3f46] font-mono transition-colors"
+                        >
+                          Use: {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cloud Actions Buttons */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               <button
                 type="button"
-                onClick={handleBrowseFolder}
-                disabled={isBrowsingFolder}
-                className="px-3 py-2 rounded-lg bg-[#27272a] hover:bg-[#323238] text-[#f4f4f5] text-xs font-medium transition-colors flex items-center gap-1.5 shrink-0"
+                onClick={handleBackupAll}
+                disabled={isBackingUpAll}
+                className="px-3 py-1.5 rounded-lg bg-[#0a84ff] hover:bg-[#0070e0] text-white text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
               >
-                <FolderOpen size={13} />
-                Browse...
+                <Cloud size={13} className={isBackingUpAll ? 'animate-bounce' : ''} />
+                {isBackingUpAll ? 'Backing Up Saves...' : 'Backup All Games Saves Now'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openCloudFolder()}
+                className="px-3 py-1.5 rounded-lg bg-[#27272a] hover:bg-[#323238] text-[#f4f4f5] text-xs font-medium transition-colors flex items-center gap-1.5"
+              >
+                <ExternalLink size={13} />
+                Open Backup Folder in Explorer
+              </button>
+
+              <button
+                type="button"
+                onClick={checkCloudDir}
+                className="px-2.5 py-1.5 rounded-lg bg-[#1f1f23] hover:bg-[#27272a] text-[#9ca3af] hover:text-[#f4f4f5] text-xs transition-colors flex items-center gap-1"
+                title="Re-check connection"
+              >
+                <RefreshCw size={12} />
+                Verify
               </button>
             </div>
-            <p className="text-[10px] text-[#71717a]">
-              Saves are compressed into versioned ZIP files for instant upload by Google Drive for Desktop.
-            </p>
+
+            {backupNotice && (
+              <div className="p-2.5 rounded bg-blue-950/30 border border-blue-500/30 text-blue-300 text-xs">
+                {backupNotice}
+              </div>
+            )}
           </div>
         )}
       </div>

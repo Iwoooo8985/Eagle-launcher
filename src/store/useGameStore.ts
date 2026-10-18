@@ -33,6 +33,12 @@ interface GameState {
     muteNotifications?: boolean;
   }) => Promise<void>;
   resetFirstRun: () => void;
+  backupGameSave: (gameId: string) => Promise<{ success: boolean; message: string }>;
+  backupAllSaves: () => Promise<{ total: number; succeeded: number; results: any[] }>;
+  setGameCustomSavePath: (gameId: string, path: string | null) => void;
+  detectGameSave: (game: GameItem) => Promise<string | null>;
+  openCloudFolder: (pathOverride?: string) => Promise<void>;
+  validateCloudSyncPath: () => Promise<{ exists: boolean; writable: boolean; message: string; suggested_paths: string[] }>;
   toggleSetting: (key: 'optimizePowerOnLaunch' | 'muteNotificationsOnLaunch' | 'autoBackupSaves') => void;
   updateGameShelf: (id: string, shelf: ShelfStatus) => void;
   updateGamePlaytime: (id: string, playtimeHours: number) => void;
@@ -81,6 +87,26 @@ interface UserOverrides {
   journal?: any[];
   coverUrl?: string;
   vibes?: VibeTag[];
+  customSavePath?: string;
+  detectedSavePath?: string;
+  lastBackupTime?: string;
+  lastBackupSize?: string;
+  lastBackupZip?: string;
+}
+
+function cleanBogusSavePath(path?: string): string | undefined {
+  if (!path) return undefined;
+  const lower = path.toLowerCase();
+  if (
+    lower.includes('\\userdata\\') ||
+    lower.includes('/userdata/') ||
+    lower.includes('redlauncher') ||
+    lower.includes('\\assets\\') ||
+    lower.includes('/assets/')
+  ) {
+    return undefined;
+  }
+  return path;
 }
 
 function loadLibraryCache(): GameItem[] {
@@ -97,7 +123,10 @@ function loadLibraryCache(): GameItem[] {
               (g.coverUrl.includes('/apps/1091500/') &&
                 !g.title?.toLowerCase().includes('cyberpunk')))
           ) {
-            return { ...g, coverUrl: undefined };
+            g = { ...g, coverUrl: undefined };
+          }
+          if (g.customSavePath) {
+            g = { ...g, customSavePath: cleanBogusSavePath(g.customSavePath) };
           }
           return g;
         });
@@ -120,7 +149,15 @@ function saveLibraryCache(games: GameItem[]) {
 function loadUserOverrides(): Record<string, UserOverrides> {
   try {
     const raw = localStorage.getItem(STORAGE_OVERRIDES_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const overrides: Record<string, UserOverrides> = JSON.parse(raw);
+      for (const key of Object.keys(overrides)) {
+        if (overrides[key].customSavePath) {
+          overrides[key].customSavePath = cleanBogusSavePath(overrides[key].customSavePath);
+        }
+      }
+      return overrides;
+    }
   } catch {
     // ignore
   }
@@ -514,6 +551,10 @@ export const useGameStore = create<GameState>((set, get) => {
               notes,
               journal,
               installed: true,
+              customSavePath: userOverride?.customSavePath ?? existing?.customSavePath,
+              lastBackupTime: userOverride?.lastBackupTime ?? existing?.lastBackupTime,
+              lastBackupSize: userOverride?.lastBackupSize ?? existing?.lastBackupSize,
+              lastBackupZip: userOverride?.lastBackupZip ?? existing?.lastBackupZip,
             };
           })
         );
@@ -534,6 +575,187 @@ export const useGameStore = create<GameState>((set, get) => {
     }
   },
 
+  backupGameSave: async (gameId: string) => {
+    const game = get().games.find((g) => g.id === gameId);
+    if (!game) return { success: false, message: 'Game not found.' };
+
+    const cloudDir = get().googleDriveSyncPath.trim();
+    if (!cloudDir) {
+      return {
+        success: false,
+        message: 'No Google Drive backup path configured. Please choose a folder in Settings.',
+      };
+    }
+
+    try {
+      if ('__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core');
+
+        // Verify/Create cloud directory first
+        const dirInfo = await invoke<any>('validate_or_create_cloud_dir', { targetDir: cloudDir });
+        if (!dirInfo.writable) {
+          return {
+            success: false,
+            message: dirInfo.message || 'Backup folder is not writable or Google Drive is disconnected.',
+          };
+        }
+
+        // Perform backup
+        const result = await invoke<any>('backup_single_game_save', {
+          title: game.title,
+          platform: game.platform,
+          gameId: game.id,
+          customSavePath: game.customSavePath || null,
+          targetCloudDir: cloudDir,
+        });
+
+        if (result.success) {
+          const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          saveUserOverride(gameId, {
+            detectedSavePath: result.source_save_path,
+            lastBackupTime: nowStr,
+            lastBackupSize: result.file_size_human,
+            lastBackupZip: result.zip_path,
+          });
+
+          set((state) => {
+            const updated = state.games.map((g) =>
+              g.id === gameId
+                ? {
+                    ...g,
+                    detectedSavePath: result.source_save_path,
+                    lastBackupTime: nowStr,
+                    lastBackupSize: result.file_size_human,
+                    lastBackupZip: result.zip_path,
+                  }
+                : g
+            );
+            saveLibraryCache(updated);
+            return {
+              games: updated,
+              selectedGame:
+                state.selectedGame?.id === gameId
+                  ? {
+                      ...state.selectedGame,
+                      detectedSavePath: result.source_save_path,
+                      lastBackupTime: nowStr,
+                      lastBackupSize: result.file_size_human,
+                      lastBackupZip: result.zip_path,
+                    }
+                  : state.selectedGame,
+            };
+          });
+
+          return { success: true, message: `Backed up to Google Drive (${result.file_size_human})` };
+        } else {
+          return { success: false, message: result.message || 'Save backup failed.' };
+        }
+      } else {
+        return { success: false, message: 'Cloud backup requires desktop application mode.' };
+      }
+    } catch (e: any) {
+      return { success: false, message: e?.toString() || 'Save backup failed.' };
+    }
+  },
+
+  backupAllSaves: async () => {
+    const cloudDir = get().googleDriveSyncPath.trim();
+    if (!cloudDir) return { total: 0, succeeded: 0, results: [] };
+
+    const games = get().games;
+    let succeeded = 0;
+    const results: any[] = [];
+
+    for (const g of games) {
+      const res = await get().backupGameSave(g.id);
+      results.push({ id: g.id, title: g.title, ...res });
+      if (res.success) succeeded++;
+    }
+
+    return { total: games.length, succeeded, results };
+  },
+
+  setGameCustomSavePath: (gameId: string, path: string | null) => {
+    saveUserOverride(gameId, { customSavePath: path || undefined });
+    set((state) => {
+      const updated = state.games.map((g) =>
+        g.id === gameId ? { ...g, customSavePath: path || undefined } : g
+      );
+      saveLibraryCache(updated);
+      return {
+        games: updated,
+        selectedGame:
+          state.selectedGame?.id === gameId
+            ? { ...state.selectedGame, customSavePath: path || undefined }
+            : state.selectedGame,
+      };
+    });
+  },
+
+  detectGameSave: async (game: GameItem) => {
+    try {
+      if ('__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const detected = await invoke<string | null>('detect_game_save_path', {
+          title: game.title,
+          platform: game.platform,
+          gameId: game.id,
+        });
+        if (detected) {
+          saveUserOverride(game.id, { detectedSavePath: detected });
+          set((state) => {
+            const updated = state.games.map((g) =>
+              g.id === game.id ? { ...g, detectedSavePath: detected } : g
+            );
+            saveLibraryCache(updated);
+            return {
+              games: updated,
+              selectedGame:
+                state.selectedGame?.id === game.id
+                  ? { ...state.selectedGame, detectedSavePath: detected }
+                  : state.selectedGame,
+            };
+          });
+        }
+        return detected;
+      }
+    } catch (e) {
+      console.error('Failed to detect save path:', e);
+    }
+    return null;
+  },
+
+  openCloudFolder: async (pathOverride?: string) => {
+    const target = pathOverride || get().googleDriveSyncPath;
+    if (!target) return;
+    try {
+      if ('__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        await invoke('open_folder_in_explorer', { path: target });
+      }
+    } catch (e) {
+      console.error('Failed to open folder in explorer:', e);
+    }
+  },
+
+  validateCloudSyncPath: async () => {
+    const target = get().googleDriveSyncPath;
+    try {
+      if ('__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        return await invoke<any>('validate_or_create_cloud_dir', { targetDir: target });
+      }
+    } catch (e: any) {
+      return {
+        exists: false,
+        writable: false,
+        message: e?.toString() || 'Validation error',
+        suggested_paths: [],
+      };
+    }
+    return { exists: false, writable: false, message: 'Web preview mode', suggested_paths: [] };
+  },
+
   launchGame: async (game) => {
     try {
       if ('__TAURI_INTERNALS__' in window) {
@@ -543,6 +765,37 @@ export const useGameStore = create<GameState>((set, get) => {
           platform: game.platform,
           optimizePower: get().optimizePowerOnLaunch,
         });
+
+        // Background auto-backup trigger on game exit
+        if (get().googleDriveSyncEnabled && get().googleDriveSyncPath.trim()) {
+          const gameId = game.id;
+          const gameTitle = game.title;
+          const searchKeyword = gameTitle.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+
+          setTimeout(() => {
+            let hasBeenDetected = false;
+            let checkCount = 0;
+            const watcherInterval = setInterval(async () => {
+              checkCount++;
+              try {
+                const running = await invoke<boolean>('is_process_running', {
+                  processKeyword: searchKeyword,
+                });
+                if (running) {
+                  hasBeenDetected = true;
+                } else if (hasBeenDetected || checkCount >= 100) {
+                  clearInterval(watcherInterval);
+                  // Game exited: allow 3s for final save writes and backup
+                  setTimeout(() => {
+                    get().backupGameSave(gameId);
+                  }, 3000);
+                }
+              } catch {
+                clearInterval(watcherInterval);
+              }
+            }, 6000);
+          }, 3000);
+        }
       } else if (game.launchUri.startsWith('http') || game.launchUri.includes('://')) {
         window.open(game.launchUri, '_blank');
       }

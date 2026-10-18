@@ -1,5 +1,20 @@
-import React, { useState } from 'react';
-import { Filter, X, Play, FileText, BookMarked, Sparkles, ExternalLink, Clock, Edit3, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Filter,
+  X,
+  Play,
+  FileText,
+  BookMarked,
+  Sparkles,
+  ExternalLink,
+  Clock,
+  Edit3,
+  Trash2,
+  Cloud,
+  FolderOpen,
+  RotateCcw,
+  CheckCircle2,
+} from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 import { ShelfStatus } from '../types/game';
 import { GameGrid } from '../components/cards/GameGrid';
@@ -34,14 +49,63 @@ export function LibraryView({ onOpenAddModal, searchInputRef }: LibraryViewProps
     addJournalEntry,
     removeGame,
     launchGame,
+    backupGameSave,
+    setGameCustomSavePath,
+    detectGameSave,
+    openCloudFolder,
   } = useGameStore();
 
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [customHours, setCustomHours] = useState('');
+  const [isBackingUpCurrent, setIsBackingUpCurrent] = useState(false);
+  const [gameBackupMsg, setGameBackupMsg] = useState<{ text: string; isError?: boolean } | null>(
+    null
+  );
+  const [detectedPath, setDetectedPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedGame) {
+      setDetectedPath(null);
+      return;
+    }
+    if (selectedGame.detectedSavePath) {
+      setDetectedPath(selectedGame.detectedSavePath);
+    }
+    detectGameSave(selectedGame).then((found) => {
+      if (found) setDetectedPath(found);
+    });
+  }, [selectedGame?.id]);
 
   const [activeShelf, setActiveShelf] = useState<'all' | ShelfStatus>('all');
   const [journalNote, setJournalNote] = useState('');
   const [journalRating, setJournalRating] = useState(5);
+
+  const handlePickGameSavePath = async () => {
+    if (!selectedGame) return;
+    try {
+      if ('__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const picked = await invoke<string | null>('pick_folder');
+        if (picked) {
+          setGameCustomSavePath(selectedGame.id, picked);
+          setGameBackupMsg({ text: `Save folder set to: ${picked}` });
+          setTimeout(() => setGameBackupMsg(null), 4000);
+        }
+      }
+    } catch (e: any) {
+      console.error('Failed to pick folder:', e);
+    }
+  };
+
+  const handleBackupCurrentGame = async () => {
+    if (!selectedGame) return;
+    setIsBackingUpCurrent(true);
+    setGameBackupMsg(null);
+    const res = await backupGameSave(selectedGame.id);
+    setIsBackingUpCurrent(false);
+    setGameBackupMsg({ text: res.message, isError: !res.success });
+    setTimeout(() => setGameBackupMsg(null), 5000);
+  };
 
   const filteredGames = games.filter((g) => {
     const matchesQuery = g.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -205,6 +269,99 @@ export function LibraryView({ onOpenAddModal, searchInputRef }: LibraryViewProps
                 </>
               )}
             </button>
+
+            {/* Google Drive Cloud Save & Backup Card */}
+            <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-3.5 space-y-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#38bdf8]">
+                  <Cloud size={13} />
+                  Google Drive Save
+                </span>
+                {selectedGame.lastBackupTime && (
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    Backed up {selectedGame.lastBackupTime} ({selectedGame.lastBackupSize})
+                  </span>
+                )}
+              </div>
+
+              {/* Path display: Custom or Auto-detected */}
+              {selectedGame.customSavePath ? (
+                <div className="flex items-center justify-between gap-1 text-[10px] text-[#9ca3af] bg-[#111114] p-1.5 rounded border border-blue-500/30">
+                  <div className="truncate font-mono" title={selectedGame.customSavePath}>
+                    <span className="text-blue-400 font-semibold">Custom:</span> {selectedGame.customSavePath}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGameCustomSavePath(selectedGame.id, null);
+                      setGameBackupMsg({ text: 'Reset to auto-detected save path.' });
+                      setTimeout(() => setGameBackupMsg(null), 3000);
+                    }}
+                    title="Reset to auto-detected save path"
+                    className="p-1 text-[#71717a] hover:text-[#f4f4f5] hover:bg-white/5 rounded transition-colors shrink-0"
+                  >
+                    <RotateCcw size={11} />
+                  </button>
+                </div>
+              ) : detectedPath ? (
+                <div
+                  className="flex items-center gap-1.5 text-[10px] text-emerald-400/90 font-mono bg-[#111114] p-1.5 rounded border border-emerald-500/20 truncate"
+                  title={detectedPath}
+                >
+                  <CheckCircle2 size={11} className="shrink-0 text-emerald-400" />
+                  <span className="truncate">Save: {detectedPath}</span>
+                </div>
+              ) : (
+                <div className="text-[10px] text-[#71717a] bg-[#111114] p-1.5 rounded border border-[#232328] flex items-center justify-between">
+                  <span>No save folder detected automatically</span>
+                  <span className="text-blue-400">Pick folder &rarr;</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleBackupCurrentGame}
+                  disabled={isBackingUpCurrent}
+                  className="flex-1 py-1.5 px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-[#38bdf8] hover:text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Cloud size={13} className={isBackingUpCurrent ? 'animate-bounce' : ''} />
+                  {isBackingUpCurrent ? 'Backing Up...' : 'Backup Save Now'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePickGameSavePath}
+                  title="Choose save folder for this game"
+                  className="p-1.5 rounded-lg bg-[#242428] hover:bg-[#2e2e34] text-[#9ca3af] hover:text-[#f4f4f5] border border-[#2b2b30] text-xs transition-colors flex items-center gap-1"
+                >
+                  <FolderOpen size={13} />
+                </button>
+
+                {selectedGame.lastBackupZip && (
+                  <button
+                    type="button"
+                    onClick={() => openCloudFolder()}
+                    title="Open backup folder in Explorer"
+                    className="p-1.5 rounded-lg bg-[#242428] hover:bg-[#2e2e34] text-[#9ca3af] hover:text-[#f4f4f5] border border-[#2b2b30] text-xs transition-colors flex items-center gap-1"
+                  >
+                    <ExternalLink size={13} />
+                  </button>
+                )}
+              </div>
+
+              {gameBackupMsg && (
+                <div
+                  className={`text-[11px] p-2 rounded border ${
+                    gameBackupMsg.isError
+                      ? 'bg-rose-950/20 border-rose-500/30 text-rose-300'
+                      : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                  }`}
+                >
+                  {gameBackupMsg.text}
+                </div>
+              )}
+            </div>
 
             {/* Backlog Shelf Selector */}
             <div>

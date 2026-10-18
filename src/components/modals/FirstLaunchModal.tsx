@@ -44,6 +44,16 @@ export function FirstLaunchModal({ isOpen, onFinish }: FirstLaunchModalProps) {
   const [isBrowsingFolder, setIsBrowsingFolder] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      useGameStore.getState().validateCloudSyncPath().then((info) => {
+        if (!info.writable && info.suggested_paths && info.suggested_paths.length > 0) {
+          setGoogleDrivePath(info.suggested_paths[0]);
+        }
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleBrowseFolder = async () => {

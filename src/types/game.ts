@@ -28,4 +28,9 @@ export interface GameItem {
   fileSize?: string;
   installed?: boolean;
   downloadSize?: string;
+  customSavePath?: string;
+  detectedSavePath?: string;
+  lastBackupTime?: string;
+  lastBackupSize?: string;
+  lastBackupZip?: string;
 }

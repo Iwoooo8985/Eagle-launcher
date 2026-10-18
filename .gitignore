@@ -14,6 +14,7 @@ target/
 **/target/
 *.pdb
 *.old.exe
+*.old
 
 # Logs
 npm-debug.log*

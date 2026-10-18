@@ -3,6 +3,7 @@
 mod process {
     pub mod launcher;
     pub mod tracker;
+    pub mod save_backup;
 }
 mod scanner;
 mod utils {
@@ -11,6 +12,13 @@ mod utils {
 
 use process::launcher::launch_game_uri;
 use process::tracker::is_process_running;
+use process::save_backup::{
+    validate_or_create_cloud_dir,
+    detect_game_save_path,
+    backup_single_game_save,
+    backup_all_games_saves,
+    open_folder_in_explorer,
+};
 use scanner::scan_all_games;
 
 #[tauri::command]
@@ -210,7 +218,12 @@ fn main() {
             pick_game_file,
             pick_folder,
             query_steam_artwork,
-            fetch_steam_specials
+            fetch_steam_specials,
+            validate_or_create_cloud_dir,
+            detect_game_save_path,
+            backup_single_game_save,
+            backup_all_games_saves,
+            open_folder_in_explorer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
