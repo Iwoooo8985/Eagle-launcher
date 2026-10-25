@@ -9,6 +9,7 @@ import { AddGameModal } from './components/modals/AddGameModal';
 import { FirstLaunchModal } from './components/modals/FirstLaunchModal';
 import { useGameStore } from './store/useGameStore';
 import { useThemeStore } from './store/useThemeStore';
+import { useUiStyleStore } from './store/useUiStyleStore';
 import { GamePlatform } from './types/game';
 
 export function App() {
@@ -29,6 +30,7 @@ export function App() {
 
   useEffect(() => {
     useThemeStore.getState().initTheme();
+    useUiStyleStore.getState().initStyle();
     if (firstRunCompleted && allowGameScan) {
       scanLocalDisks();
     }

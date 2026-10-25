@@ -97,6 +97,74 @@ fn pick_folder() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+fn resolve_game_icon(app_id: Option<String>, launch_uri: Option<String>) -> Option<String> {
+    // 1. Check Steam local librarycache/<app_id>/<40-char-sha1>.jpg for the official square game icon
+    if let Some(ref id) = app_id {
+        if !id.is_empty() {
+            if let Some(steam_path) = utils::registry::read_hkcu_string("Software\\Valve\\Steam", "SteamPath") {
+                let cache_dir = std::path::PathBuf::from(&steam_path)
+                    .join("appcache")
+                    .join("librarycache")
+                    .join(id);
+                if let Ok(entries) = std::fs::read_dir(&cache_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            if let (Some(stem), Some(ext)) = (
+                                path.file_stem().and_then(|s| s.to_str()),
+                                path.extension().and_then(|e| e.to_str()),
+                            ) {
+                                if ext.eq_ignore_ascii_case("jpg")
+                                    && stem.len() == 40
+                                    && stem.chars().all(|c| c.is_ascii_hexdigit())
+                                {
+                                    return Some(format!(
+                                        "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/{}/{}.jpg",
+                                        id, stem
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. For standalone .exe games, extract the associated Windows executable icon as base64 PNG
+    #[cfg(target_os = "windows")]
+    if let Some(ref uri) = launch_uri {
+        let path = std::path::Path::new(uri);
+        if path.is_file() {
+            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if ext.eq_ignore_ascii_case("exe") {
+                    use std::os::windows::process::CommandExt;
+                    let escaped = uri.replace('\'', "''");
+                    let mut cmd = std::process::Command::new("powershell");
+                    cmd.creation_flags(0x08000000);
+                    cmd.args([
+                        "-NoProfile",
+                        "-Command",
+                        &format!(
+                            "try {{ Add-Type -AssemblyName System.Drawing; $ico = [System.Drawing.Icon]::ExtractAssociatedIcon('{}'); if ($ico) {{ $bmp = $ico.ToBitmap(); $ms = New-Object System.IO.MemoryStream; $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png); [Convert]::ToBase64String($ms.ToArray()) }} }} catch {{}}",
+                            escaped
+                        ),
+                    ]);
+                    if let Ok(output) = cmd.output() {
+                        let b64 = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        if !b64.is_empty() {
+                            return Some(format!("data:image/png;base64,{}", b64));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+#[tauri::command]
 fn query_steam_artwork(title: String) -> Result<Option<String>, String> {
     #[cfg(target_os = "windows")]
     {
@@ -217,6 +285,7 @@ fn main() {
             close_window,
             pick_game_file,
             pick_folder,
+            resolve_game_icon,
             query_steam_artwork,
             fetch_steam_specials,
             validate_or_create_cloud_dir,

@@ -7,9 +7,12 @@ interface GameCoverImageProps {
   title: string;
   platform?: string;
   gameId?: string;
+  launchUri?: string;
   className?: string;
-  aspect?: 'poster' | 'horizontal';
+  aspect?: 'poster' | 'horizontal' | 'icon';
 }
+
+const resolvedIconCache = new Map<string, string>();
 
 // Deterministic aesthetic gradient palettes for games without box art
 const GRADIENT_PALETTES = [
@@ -37,6 +40,7 @@ export function GameCoverImage({
   title,
   platform = 'steam',
   gameId,
+  launchUri,
   className = '',
   aspect = 'horizontal',
 }: GameCoverImageProps) {
@@ -54,6 +58,39 @@ export function GameCoverImage({
 
   useEffect(() => {
     const appId = getSteamAppId();
+
+    if (aspect === 'icon') {
+      const cacheKey = `${gameId || ''}|${appId || ''}|${launchUri || ''}`;
+      if (resolvedIconCache.has(cacheKey)) {
+        setCurrentSrc(resolvedIconCache.get(cacheKey)!);
+        setAttempt(0);
+        setFailed(false);
+        return;
+      }
+
+      if ('__TAURI_INTERNALS__' in window) {
+        import('@tauri-apps/api/core')
+          .then(({ invoke }) => {
+            invoke<string | null>('resolve_game_icon', {
+              appId: appId || null,
+              launchUri: launchUri || null,
+            })
+              .then((iconSrc) => {
+                if (iconSrc) {
+                  resolvedIconCache.set(cacheKey, iconSrc);
+                  setCurrentSrc(iconSrc);
+                  setFailed(false);
+                } else {
+                  setFailed(true);
+                }
+              })
+              .catch(() => setFailed(true));
+          })
+          .catch(() => setFailed(true));
+        return;
+      }
+    }
+
     if (appId) {
       // Prioritize Steam's universal 460x215 header that exists for 100% of Steam titles
       setCurrentSrc(
@@ -91,6 +128,11 @@ export function GameCoverImage({
   }, [coverUrl, gameId, title]);
 
   const handleError = () => {
+    if (aspect === 'icon') {
+      setFailed(true);
+      return;
+    }
+
     const appId = getSteamAppId();
 
     if (appId) {
@@ -121,6 +163,16 @@ export function GameCoverImage({
   const paletteGradient = getPaletteForTitle(title);
 
   if (failed || !currentSrc) {
+    if (aspect === 'icon') {
+      return (
+        <div
+          className={`w-full h-full flex items-center justify-center select-none ${className}`}
+        >
+          <Gamepad2 className="w-4 h-4 text-[#9ca3af]" strokeWidth={1.8} />
+        </div>
+      );
+    }
+
     return (
       <div
         className={`w-full h-full relative overflow-hidden flex flex-col justify-between p-4 bg-gradient-to-br ${paletteGradient} border border-white/10 select-none ${className}`}

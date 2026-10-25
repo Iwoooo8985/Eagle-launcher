@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Minus, Square, X, RefreshCw, Plus, Moon, Volume2, Shield, Palette } from 'lucide-react';
+import { Minus, Square, X, RefreshCw, Plus, Moon, Volume2, Shield, Palette, LayoutTemplate } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { useThemeStore } from '../../store/useThemeStore';
 import { ThemeModal } from '../modals/ThemeModal';
+import { UiStyleModal } from '../modals/UiStyleModal';
 import { EagleLogo } from '../common/EagleLogo';
 
 interface TitleBarProps {
@@ -12,6 +13,7 @@ interface TitleBarProps {
 export function TitleBar({ onOpenAddModal }: TitleBarProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isUiStyleModalOpen, setIsUiStyleModalOpen] = useState(false);
   const { scanLocalDisks, isScanning, setSelectedPlatform } = useGameStore();
   const { currentThemeId, setThemeById } = useThemeStore();
 
@@ -228,6 +230,15 @@ export function TitleBar({ onOpenAddModal }: TitleBarProps) {
           <Palette size={11} className="text-[#0a84ff]" />
           Themes
         </button>
+
+        {/* UI Style Button */}
+        <button
+          onClick={() => setIsUiStyleModalOpen(true)}
+          className="px-2 py-0.5 rounded text-[11px] hover:text-[#f4f4f5] transition-colors flex items-center gap-1 hover:bg-[#222226]"
+        >
+          <LayoutTemplate size={11} className="text-[#0a84ff]" />
+          UI
+        </button>
       </div>
 
       {/* Center Drag Region / Workspace Title */}
@@ -267,6 +278,12 @@ export function TitleBar({ onOpenAddModal }: TitleBarProps) {
       <ThemeModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* UI Style Selection Modal */}
+      <UiStyleModal
+        isOpen={isUiStyleModalOpen}
+        onClose={() => setIsUiStyleModalOpen(false)}
       />
     </div>
   );

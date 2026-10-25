@@ -50,86 +50,6 @@ export const PRESET_THEMES: ThemeDefinition[] = [
       border: '#18181b',
     },
   },
-  {
-    id: 'liquid-glass',
-    name: 'Liquid Glass (Aero Frost)',
-    description: 'Translucent frosted acrylic with deep specular refraction and cyan highlights.',
-    colors: {
-      bg: '#070b14',
-      sidebar: '#0c1220',
-      cardBg: '#11192e',
-      accent: '#38bdf8',
-      accentHover: '#0284c7',
-      text: '#f8fafc',
-      textMuted: '#94a3b8',
-      border: '#1e293b',
-    },
-    customCss: `
-      .aspect-video, .group {
-        backdrop-filter: blur(12px);
-      }
-    `,
-  },
-  {
-    id: 'cyberpunk',
-    name: 'Cyberpunk Neon',
-    description: 'Vibrant Night City aesthetic with electric magenta accents and deep violet surfaces.',
-    colors: {
-      bg: '#0a0817',
-      sidebar: '#0f0b24',
-      cardBg: '#171133',
-      accent: '#f43f5e',
-      accentHover: '#e11d48',
-      text: '#fff1f2',
-      textMuted: '#fda4af',
-      border: '#351f54',
-    },
-  },
-  {
-    id: 'emerald',
-    name: 'Emerald Matrix',
-    description: 'Tactical deep forest green with cybernetic emerald neon glow.',
-    colors: {
-      bg: '#06100a',
-      sidebar: '#0a170f',
-      cardBg: '#0f2418',
-      accent: '#10b981',
-      accentHover: '#059669',
-      text: '#ecfdf5',
-      textMuted: '#6ee7b7',
-      border: '#1a3e29',
-    },
-  },
-  {
-    id: 'amethyst',
-    name: 'Midnight Amethyst',
-    description: 'Nebula violet gradients with radiant purple luminescence.',
-    colors: {
-      bg: '#0c0717',
-      sidebar: '#130c24',
-      cardBg: '#1c1236',
-      accent: '#a855f7',
-      accentHover: '#9333ea',
-      text: '#faf5ff',
-      textMuted: '#c084fc',
-      border: '#2e1d52',
-    },
-  },
-  {
-    id: 'nord',
-    name: 'Nordic Frost',
-    description: 'Cool polar arctic slate inspired by Arctic ice and aurora borealis.',
-    colors: {
-      bg: '#12161f',
-      sidebar: '#181e2b',
-      cardBg: '#1f2737',
-      accent: '#88c0d0',
-      accentHover: '#81a1c1',
-      text: '#eceff4',
-      textMuted: '#d8dee9',
-      border: '#2e384d',
-    },
-  },
 ];
 
 const STORAGE_THEME_KEY = 'eagle_launcher_active_theme_v2';
@@ -140,13 +60,31 @@ interface ThemeState {
   customTheme: ThemeDefinition | null;
   activeColors: ThemeColors;
   setThemeById: (id: string) => void;
+  setCustomColors: (updates: Partial<ThemeColors>) => void;
   loadThemeFromFile: (fileContent: string, fileName: string) => { success: boolean; error?: string };
   resetTheme: () => void;
   initTheme: () => void;
 }
 
+function getHexLuminance(hex: string): number {
+  const clean = (hex || '').replace('#', '').trim();
+  if (clean.length !== 6) return 0;
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
 function applyThemeDom(theme: ThemeDefinition) {
   const root = document.documentElement;
+  const accentLum = getHexLuminance(theme.colors.accent);
+  const bgLum = Math.max(getHexLuminance(theme.colors.bg), getHexLuminance(theme.colors.cardBg));
+
+  const accentFg = accentLum > 0.42 ? '#09090b' : '#ffffff';
+  const textMain = bgLum > 0.5 ? '#0f0f11' : theme.colors.text;
+  const textMuted = bgLum > 0.5 ? '#4b5563' : theme.colors.textMuted;
+
   root.style.setProperty('--app-bg', theme.colors.bg);
   root.style.setProperty('--app-sidebar', theme.colors.sidebar || theme.colors.bg);
   root.style.setProperty('--app-card', theme.colors.cardBg);
@@ -155,10 +93,10 @@ function applyThemeDom(theme: ThemeDefinition) {
   root.style.setProperty('--app-border', theme.colors.border);
   root.style.setProperty('--app-accent', theme.colors.accent);
   root.style.setProperty('--app-accent-hover', theme.colors.accentHover);
-  root.style.setProperty('--app-text', theme.colors.text);
-  root.style.setProperty('--app-text-muted', theme.colors.textMuted);
+  root.style.setProperty('--app-accent-fg', accentFg);
+  root.style.setProperty('--app-text', textMain);
+  root.style.setProperty('--app-text-muted', textMuted);
 
-  // Apply or update custom CSS tag if present
   let styleEl = document.getElementById('eagle-theme-custom-style') as HTMLStyleElement | null;
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -212,13 +150,40 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     }
   },
 
+  setCustomColors: (updates: Partial<ThemeColors>) => {
+    const current = get().activeColors;
+    const mergedColors: ThemeColors = {
+      ...current,
+      ...updates,
+      sidebar: updates.sidebar ?? (updates.bg ? updates.bg : current.sidebar || current.bg),
+      accentHover: updates.accentHover ?? (updates.accent ? updates.accent : current.accentHover),
+    };
+
+    const customThemeObj: ThemeDefinition = {
+      id: 'custom',
+      name: 'Custom Colors',
+      description: 'User-selected custom theme palette',
+      colors: mergedColors,
+      customCss: get().customTheme?.customCss || '',
+    };
+
+    localStorage.setItem(STORAGE_CUSTOM_THEME_KEY, JSON.stringify(customThemeObj));
+    localStorage.setItem(STORAGE_THEME_KEY, 'custom');
+    applyThemeDom(customThemeObj);
+
+    set({
+      currentThemeId: 'custom',
+      customTheme: customThemeObj,
+      activeColors: mergedColors,
+    });
+  },
+
   loadThemeFromFile: (fileContent: string, fileName: string) => {
     try {
       const trimmed = fileContent.trim();
       let newTheme: ThemeDefinition;
 
       if (trimmed.startsWith('{')) {
-        // Parse JSON format theme
         const parsed = JSON.parse(trimmed);
         newTheme = {
           id: 'custom',
@@ -236,7 +201,6 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
           customCss: parsed.customCss || parsed.css || '',
         };
       } else {
-        // Plain CSS stylesheet
         newTheme = {
           id: 'custom',
           name: fileName.replace(/\.[^/.]+$/, '') || 'Custom CSS Theme',

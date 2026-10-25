@@ -11,6 +11,7 @@
   --app-border: #27272a;
   --app-accent: #0a84ff;
   --app-accent-hover: #0070e0;
+  --app-accent-fg: #ffffff;
   --app-text: #f4f4f5;
   --app-text-muted: #9ca3af;
 }
@@ -22,53 +23,128 @@ html, body, #root {
 }
 
 /* App Canvas & Containers */
-.bg-\[\#0f0f11\], [class*="bg-[#0f0f11]"] {
+.bg-\[\#0f0f11\] {
   background-color: var(--app-bg) !important;
 }
 
 /* Sidebars & Top Bars */
-.bg-\[\#121214\], [class*="bg-[#121214]"] {
+.bg-\[\#121214\] {
   background-color: var(--app-sidebar) !important;
 }
 
 /* Cards & Modals Surface */
-.bg-\[\#18181b\], [class*="bg-[#18181b]"] {
+.bg-\[\#18181b\] {
   background-color: var(--app-card) !important;
 }
 
-.bg-\[\#141416\], [class*="bg-[#141416]"], .bg-\[\#141417\] {
+.bg-\[\#141416\], .bg-\[\#141417\] {
   background-color: var(--app-card-alt) !important;
 }
 
-.bg-\[\#1e1e22\], [class*="bg-[#1e1e22]"] {
+.bg-\[\#141416\]\/60 {
+  background-color: color-mix(in srgb, var(--app-card-alt) 60%, transparent) !important;
+}
+
+.bg-\[\#1e1e22\], .hover\:bg-\[\#1e1e22\]:hover, .hover\:bg-\[\#18181b\]:hover {
   background-color: var(--app-card-hover) !important;
 }
 
-/* Borders */
-.border-\[\#27272a\], [class*="border-[#27272a]"],
-.border-\[\#222226\], [class*="border-[#222226]"],
-.border-\[\#2e2e34\], [class*="border-[#2e2e34]"],
-.border-\[\#1f1f23\], [class*="border-[#1f1f23]"],
-.border-\[\#2b2b30\], [class*="border-[#2b2b30]"],
+/* Dynamic Text Contrast for Custom Backgrounds */
+.text-\[\#f4f4f5\], .text-\[\#e4e4e7\], .text-\[\#d1d5db\] {
+  color: var(--app-text) !important;
+}
+
+.text-\[\#9ca3af\], .text-\[\#82828e\], .text-\[\#71717a\] {
+  color: var(--app-text-muted) !important;
+}
+
+/* Borders (exact classes so focus:/hover:/opacity variants are not clobbered) */
+.border-\[\#27272a\],
+.border-\[\#222226\],
+.border-\[\#2e2e34\],
+.border-\[\#1f1f23\],
+.border-\[\#2b2b30\],
 .border-\[\#3c3c44\] {
   border-color: var(--app-border) !important;
 }
 
-/* Brand Accent Colors */
-.text-\[\#0a84ff\], [class*="text-[#0a84ff]"] {
+/* Brand Accent Colors — Text */
+.text-\[\#0a84ff\],
+.group:hover .group-hover\:text-\[\#0a84ff\] {
   color: var(--app-accent) !important;
 }
 
-.bg-\[\#0a84ff\], [class*="bg-[#0a84ff]"] {
+/* Brand Accent Colors — Solid Backgrounds (with automatic foreground contrast) */
+.bg-\[\#0a84ff\],
+.hover\:bg-\[\#0a84ff\]:hover,
+.peer:checked ~ .peer-checked\:bg-\[\#0a84ff\] {
   background-color: var(--app-accent) !important;
+  color: var(--app-accent-fg) !important;
 }
 
-.hover\:bg-\[\#0070e0\]:hover, [class*="hover:bg-[#0070e0]"]:hover {
+.bg-\[\#0a84ff\] svg,
+.from-\[\#0a84ff\] svg {
+  color: var(--app-accent-fg) !important;
+}
+
+.hover\:bg-\[\#0070e0\]:hover {
   background-color: var(--app-accent-hover) !important;
+  color: var(--app-accent-fg) !important;
 }
 
-.border-\[\#0a84ff\], [class*="border-[#0a84ff]"] {
+.from-\[\#0a84ff\] {
+  --tw-gradient-from: var(--app-accent) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: var(--app-accent-hover) var(--tw-gradient-to-position) !important;
+  color: var(--app-accent-fg) !important;
+}
+
+.to-\[\#0060df\] {
+  --tw-gradient-to: var(--app-accent-hover) var(--tw-gradient-to-position) !important;
+}
+
+/* Brand Accent Colors — Translucent Tints (preserve opacity so text remains visible!) */
+.bg-\[\#0a84ff\]\/5 {
+  background-color: color-mix(in srgb, var(--app-accent) 5%, transparent) !important;
+}
+
+.bg-\[\#0a84ff\]\/10 {
+  background-color: color-mix(in srgb, var(--app-accent) 12%, transparent) !important;
+}
+
+.bg-\[\#0a84ff\]\/15 {
+  background-color: color-mix(in srgb, var(--app-accent) 16%, transparent) !important;
+}
+
+.bg-\[\#0a84ff\]\/20,
+.hover\:bg-\[\#0a84ff\]\/20:hover {
+  background-color: color-mix(in srgb, var(--app-accent) 22%, transparent) !important;
+}
+
+.bg-\[\#0a84ff\]\/30 {
+  background-color: color-mix(in srgb, var(--app-accent) 30%, transparent) !important;
+}
+
+/* Brand Accent Colors — Borders */
+.border-\[\#0a84ff\],
+.focus\:border-\[\#0a84ff\]:focus,
+.hover\:border-\[\#0a84ff\]:hover {
   border-color: var(--app-accent) !important;
+}
+
+.border-\[\#0a84ff\]\/20 {
+  border-color: color-mix(in srgb, var(--app-accent) 22%, transparent) !important;
+}
+
+.border-\[\#0a84ff\]\/30 {
+  border-color: color-mix(in srgb, var(--app-accent) 32%, transparent) !important;
+}
+
+.border-\[\#0a84ff\]\/40 {
+  border-color: color-mix(in srgb, var(--app-accent) 42%, transparent) !important;
+}
+
+.border-\[\#0a84ff\]\/50 {
+  border-color: color-mix(in srgb, var(--app-accent) 52%, transparent) !important;
 }
 
 @layer base {

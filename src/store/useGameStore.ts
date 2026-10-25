@@ -758,6 +758,21 @@ export const useGameStore = create<GameState>((set, get) => {
 
   launchGame: async (game) => {
     try {
+      saveUserOverride(game.id, { lastPlayed: 'Just now' });
+      set((state) => {
+        const updated = state.games.map((g) =>
+          g.id === game.id ? { ...g, lastPlayed: 'Just now' } : g
+        );
+        saveLibraryCache(updated);
+        return {
+          games: updated,
+          selectedGame:
+            state.selectedGame?.id === game.id
+              ? { ...state.selectedGame, lastPlayed: 'Just now' }
+              : state.selectedGame,
+        };
+      });
+
       if ('__TAURI_INTERNALS__' in window) {
         const { invoke } = await import('@tauri-apps/api/core');
         await invoke('launch_game_uri', {

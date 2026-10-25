@@ -1,0 +1,188 @@
+/*
+ * Eagle Launcher — UI Style: Dark Gradient (Minimal Icon Layout)
+ *
+ * - Compact vertical icon-column layout matching the sketch
+ * - Top: wider rounded rectangle (+ Add Game)
+ * - Middle: 3 smaller rounded-square icon buttons (Library, Pulse, Deals)
+ * - Below: 3 compact horizontal rounded-rectangle game pills (from library)
+ * - Clean black & charcoal-grey gradients (no liquid glass sheen)
+ */
+
+html[data-ui-style="liquid-glass"] [data-ui="sidebar"] {
+  width: 5.5rem !important;
+  padding: 0.9rem 0.5rem !important;
+  align-items: center !important;
+  background: var(--app-sidebar) !important;
+  border-right: 1px solid var(--app-border) !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-top"] {
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-nav"] {
+  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-top: 0.1rem !important;
+}
+
+/* Hide text labels & top header row in the minimal icon UI */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-header"],
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-label"],
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-collapse"] {
+  display: none !important;
+}
+
+/* ---------- Black & Charcoal-Grey Gradient Buttons ---------- */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"],
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"],
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"] {
+  position: relative;
+  overflow: hidden;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background: linear-gradient(160deg, #28282e 0%, #19191d 55%, #101013 100%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid #2e2e35 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  color: #9ca3af !important;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"]::before,
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"]::before,
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"]::before,
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"]::after,
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"]::after,
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"]::after {
+  display: none !important;
+}
+
+/* 1. Top Wider Rounded Rectangle (+ Plus Icon) */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"] {
+  width: 3.85rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+/* 2. Middle 3 Smaller Rounded-Square Nav Buttons (Library, Pulse, Deals) */
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"] {
+  width: 2.75rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+/* Bottom Settings Icon Button */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"] {
+  width: 2.55rem !important;
+  height: 2.35rem !important;
+  border-radius: 0.7rem !important;
+}
+
+/* Smaller crisp icons inside the buttons */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"] svg,
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"] svg,
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"] svg {
+  width: 15px !important;
+  height: 15px !important;
+  color: inherit !important;
+}
+
+/* Hover state: lighter grey-to-black gradient & bright icon */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-add"]:hover,
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"]:hover,
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"]:hover {
+  color: #ffffff !important;
+  background: linear-gradient(160deg, #34343c 0%, #222228 55%, #151519 100%) !important;
+  border-color: #43434d !important;
+  transform: translateY(-1px);
+}
+
+/* Active state: distinct charcoal-grey gradient */
+html[data-ui-style="liquid-glass"] [data-ui="nav-item"][data-active="true"],
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-settings"][data-active="true"] {
+  color: #ffffff !important;
+  background: linear-gradient(160deg, #3b3b45 0%, #25252c 55%, #17171c 100%) !important;
+  border-color: #555562 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* ---------- 3. Bottom 3 Smaller Horizontal Game Buttons ---------- */
+html[data-ui-style="liquid-glass"] [data-ui="folder-games"] {
+  width: 100%;
+  margin-top: 0.25rem !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="game-icon-btn"] {
+  position: relative;
+  width: 3.4rem !important;
+  height: 2.15rem !important;
+  border-radius: 0.7rem !important;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(160deg, #28282e 0%, #19191d 55%, #101013 100%) !important;
+  border: 1px solid #2e2e35 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="game-icon-btn"] img {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+  object-fit: contain !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="game-icon-btn"]::after {
+  display: none !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="game-icon-btn"]:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(160deg, #34343c 0%, #222228 55%, #151519 100%) !important;
+  border-color: #43434d !important;
+}
+
+html[data-ui-style="liquid-glass"] [data-ui="game-icon-btn"][data-active="true"] {
+  background: linear-gradient(160deg, #3b3b45 0%, #25252c 55%, #17171c 100%) !important;
+  border-color: #555562 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Footer */
+html[data-ui-style="liquid-glass"] [data-ui="sidebar-footer"] {
+  width: 100%;
+  border-top-color: #222226 !important;
+  padding-top: 0.6rem !important;
+}
