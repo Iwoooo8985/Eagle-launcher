@@ -1,0 +1,15 @@
+{
+  "name": "Obsidian Dark (Default)",
+  "description": "Minimalist high-contrast obsidian dark palette with cobalt blue accents.",
+  "colors": {
+    "bg": "#0f0f11",
+    "sidebar": "#121214",
+    "cardBg": "#18181b",
+    "accent": "#0a84ff",
+    "accentHover": "#0070e0",
+    "text": "#f4f4f5",
+    "textMuted": "#9ca3af",
+    "border": "#27272a"
+  },
+  "customCss": ""
+}

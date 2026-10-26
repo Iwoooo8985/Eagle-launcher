@@ -1,0 +1,15 @@
+{
+  "name": "OLED Abyss",
+  "description": "Pure #000000 pitch-black canvas with high-contrast borders and zero emission.",
+  "colors": {
+    "bg": "#000000",
+    "sidebar": "#050505",
+    "cardBg": "#09090b",
+    "accent": "#ffffff",
+    "accentHover": "#e4e4e7",
+    "text": "#ffffff",
+    "textMuted": "#71717a",
+    "border": "#18181b"
+  },
+  "customCss": ""
+}

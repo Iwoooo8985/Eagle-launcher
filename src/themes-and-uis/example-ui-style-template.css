@@ -1,0 +1,133 @@
+/*
+ * ============================================================================
+ * EAGLE LAUNCHER — CUSTOM UI STYLE TEMPLATE (.css)
+ * ============================================================================
+ * How to use:
+ *   1. Edit the CSS rules below in Notepad or VS Code.
+ *   2. Save this file as a .css file.
+ *   3. In Eagle Launcher, click "UI" on the top bar and load this file!
+ *
+ * All features (Library, Pulse Zero Fatigue, Deals, Settings, Top Bar) keep
+ * working identically. Prefix rules with `html[data-ui-style]` so they override
+ * the default styling.
+ *
+ * Available [data-ui] hooks:
+ *   [data-ui="sidebar"]          Entire left sidebar panel
+ *   [data-ui="sidebar-top"]      Upper scrollable section of the sidebar
+ *   [data-ui="sidebar-header"]   Top logo & history arrows row
+ *   [data-ui="sidebar-add"]      "+ Add Game / ROM" button
+ *   [data-ui="sidebar-nav"]      Container for Library / Pulse / Deals buttons
+ *   [data-ui="nav-item"]         Library, Pulse, and Deals buttons
+ *   [data-ui="sidebar-label"]    Text labels inside buttons (hide for icon-only)
+ *   [data-ui="folder-games"]     Container for the 3 quick-access game icons
+ *   [data-ui="game-icon-btn"]    Individual game icon button in the sidebar
+ *   [data-ui="sidebar-footer"]   Bottom footer area
+ *   [data-ui="sidebar-settings"] Bottom Settings gear button
+ * ============================================================================
+ */
+
+/* Sidebar container width & background */
+html[data-ui-style] [data-ui="sidebar"] {
+  width: 6rem !important;
+  padding: 0.9rem 0.5rem !important;
+  align-items: center !important;
+  background: var(--app-sidebar) !important;
+  border-right: 1px solid var(--app-border) !important;
+}
+
+/* Stack top items vertically and center them */
+html[data-ui-style] [data-ui="sidebar-top"],
+html[data-ui-style] [data-ui="sidebar-nav"] {
+  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+}
+
+/* Hide text labels for a clean icon-only sidebar (remove this block to keep text) */
+html[data-ui-style] [data-ui="sidebar-header"],
+html[data-ui-style] [data-ui="sidebar-label"],
+html[data-ui-style] [data-ui="sidebar-collapse"] {
+  display: none !important;
+}
+
+/* Base button styling (Add Game, Nav items, Settings) */
+html[data-ui-style] [data-ui="sidebar-add"],
+html[data-ui-style] [data-ui="nav-item"],
+html[data-ui-style] [data-ui="sidebar-settings"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  background: linear-gradient(160deg, #28282e 0%, #19191d 55%, #101013 100%) !important;
+  border: 1px solid #2e2e35 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  color: #9ca3af !important;
+}
+
+/* Top "+ Add Game" button size */
+html[data-ui-style] [data-ui="sidebar-add"] {
+  width: 3.85rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Middle 3 nav buttons (Library, Pulse, Deals) size */
+html[data-ui-style] [data-ui="nav-item"] {
+  width: 2.75rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Bottom Settings button size */
+html[data-ui-style] [data-ui="sidebar-settings"] {
+  width: 2.55rem !important;
+  height: 2.35rem !important;
+  border-radius: 0.7rem !important;
+}
+
+/* Hover state */
+html[data-ui-style] [data-ui="sidebar-add"]:hover,
+html[data-ui-style] [data-ui="nav-item"]:hover,
+html[data-ui-style] [data-ui="sidebar-settings"]:hover {
+  color: #ffffff !important;
+  background: linear-gradient(160deg, #34343c 0%, #222228 55%, #151519 100%) !important;
+  border-color: #43434d !important;
+  transform: translateY(-1px);
+}
+
+/* Active / selected state */
+html[data-ui-style] [data-ui="nav-item"][data-active="true"],
+html[data-ui-style] [data-ui="sidebar-settings"][data-active="true"] {
+  color: #ffffff !important;
+  background: linear-gradient(160deg, #3b3b45 0%, #25252c 55%, #17171c 100%) !important;
+  border-color: var(--app-accent) !important;
+}
+
+/* Quick-access library game icon buttons */
+html[data-ui-style] [data-ui="folder-games"] {
+  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+}
+
+html[data-ui-style] [data-ui="game-icon-btn"] {
+  width: 3.4rem !important;
+  height: 2.15rem !important;
+  border-radius: 0.7rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(160deg, #28282e 0%, #19191d 55%, #101013 100%) !important;
+  border: 1px solid #2e2e35 !important;
+}
+
+html[data-ui-style] [data-ui="game-icon-btn"] img {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+  object-fit: contain !important;
+}

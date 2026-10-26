@@ -1,0 +1,105 @@
+================================================================================
+              EAGLE LAUNCHER — HOW TO MAKE CUSTOM THEMES & UI STYLES
+================================================================================
+
+Welcome! Eagle Launcher lets you customize both:
+  1. COLOR THEMES ("Themes" button on the top bar) — Changes colors & palette
+  2. UI STYLES ("UI" button on the top bar)        — Changes sidebar & button layout
+
+All core features (Library, Pulse Zero Fatigue, Deals, Settings, Top Bar) keep
+working 100% the same no matter which Theme or UI Style you load.
+
+
+--------------------------------------------------------------------------------
+PART 1: HOW TO MAKE A CUSTOM COLOR THEME (.json or .css)
+--------------------------------------------------------------------------------
+
+STEP 1: Copy "example-theme-template.json" in this folder and rename it
+        (for example: "my-theme.json").
+
+STEP 2: Open your file in Notepad (or any text editor) and edit the hex colors:
+
+{
+  "name": "My Custom Theme",
+  "description": "My personal color palette for Eagle Launcher",
+  "colors": {
+    "bg": "#0f0f11",          // Main app background color
+    "sidebar": "#121214",     // Left sidebar background color
+    "cardBg": "#18181b",      // Game cards, modals, and panel surfaces
+    "accent": "#0a84ff",      // Primary highlight, active badges & buttons
+    "accentHover": "#0070e0", // Hover state for primary buttons
+    "text": "#f4f4f5",        // Primary readable text color
+    "textMuted": "#9ca3af",   // Secondary / subtitle text color
+    "border": "#27272a"       // Card & panel border color
+  },
+  "customCss": ""             // Optional extra CSS rules
+}
+
+STEP 3: Load your theme in Eagle Launcher:
+  - Click "Themes" on the top title bar.
+  - Drag & drop your ".json" file into the upload box (or click to browse).
+  - Tip: You can also pick colors live using the Color Wheel in the Themes window
+    and click "Export Current Theme (.json)" at the bottom-left to save it!
+
+
+--------------------------------------------------------------------------------
+PART 2: HOW TO MAKE A CUSTOM UI STYLE (.css or .json)
+--------------------------------------------------------------------------------
+
+UI Styles let you reshape the sidebar, buttons, icons, and spacing using CSS
+without changing how any buttons work.
+
+STEP 1: Copy "example-ui-style-template.css" or "minimal-dark-ui.css" in this
+        folder and rename it (for example: "my-ui.css").
+
+STEP 2: Open it in Notepad or VS Code. Prefix your rules with:
+        html[data-ui-style]
+        so your custom styles override the default layout.
+
+AVAILABLE UI SELECTORS (data-ui hooks):
+  [data-ui="sidebar"]          -> The entire left sidebar container
+  [data-ui="sidebar-top"]      -> Upper scrollable section of the sidebar
+  [data-ui="sidebar-header"]   -> Top logo + navigation arrows row
+  [data-ui="sidebar-add"]      -> The "+ Add Game / ROM" button
+  [data-ui="sidebar-nav"]      -> Container holding Library / Pulse / Deals
+  [data-ui="nav-item"]         -> Library, Pulse, and Deals buttons
+                                  (has [data-active="true"] when selected)
+  [data-ui="sidebar-label"]    -> Text labels inside sidebar buttons
+                                  (set display: none !important; for icon-only UI)
+  [data-ui="folder-games"]     -> Quick-access game icons container (non-Classic UI)
+  [data-ui="game-icon-btn"]    -> Individual game icon buttons in the sidebar
+                                  (has [data-active="true"] when selected)
+  [data-ui="platform-folder"]  -> "Eagle launcher" collapsible folder row
+  [data-ui="platform-item"]    -> Platform filter rows
+  [data-ui="sidebar-footer"]   -> Bottom footer area of the sidebar
+  [data-ui="sidebar-settings"] -> Bottom Settings gear button
+
+AVAILABLE THEME CSS VARIABLES (automatically match the active color theme):
+  var(--app-bg)           Main background color
+  var(--app-sidebar)      Sidebar background color
+  var(--app-card)         Card / surface background color
+  var(--app-border)       Border color
+  var(--app-accent)       Active accent color
+  var(--app-accent-hover) Accent hover color
+  var(--app-accent-fg)    Auto-contrasting text color on solid accent buttons
+  var(--app-text)         Main text color
+  var(--app-text-muted)   Muted text color
+
+STEP 3: Load your UI Style in Eagle Launcher:
+  - Click "UI" on the top title bar.
+  - Drag & drop your ".css" (or ".json") file into the upload box, or click to
+    browse and select it.
+  - To return to the original layout at any time, click "Classic" or
+    "Reset to Classic".
+
+
+--------------------------------------------------------------------------------
+FILES INCLUDED IN THIS FOLDER
+--------------------------------------------------------------------------------
+  1. HOW TO MAKE THEMES AND UIS.txt  — This guide
+  2. example-theme-template.json     — Starter template for custom Color Themes
+  3. obsidian-dark-theme.json        — Built-in Obsidian Dark theme preset
+  4. oled-abyss-theme.json           — Built-in OLED Abyss (#000000) theme preset
+  5. example-ui-style-template.css   — Starter template for custom UI Styles
+  6. minimal-dark-ui.css             — Built-in Minimal Dark icon-column UI style
+================================================================================
